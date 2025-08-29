@@ -1,0 +1,8 @@
+# Copilot Customization for Powerpoint-Speaker-Notes
+
+# Always reference the product requirements document before making changes
+reference_files:
+  - PSN_spec.md
+
+# Description:
+# This configuration instructs GitHub Copilot and related automation to always consult the PSN_spec.md file in the project root before making or suggesting any code changes. This ensures all changes align with the current product requirements.
