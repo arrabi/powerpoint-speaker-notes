@@ -8,13 +8,16 @@ PowerPoint's digital speaker view is useful for presenters, but it cannot be pri
 - Automate the process of generating speaker-note-slides for any PowerPoint presentation.
 
 ## 3. Features
-- **Slide Duplication:** For each slide in the original presentation, insert a new slide immediately after it.
-- **Speaker Notes Extraction:** Copy the speaker notes from the original slide to the new slide.
-- **External Notes Upload:** Allow users to upload a PDF or Markdown file containing speaker notes for each slide. The app will parse these files and insert the provided notes into the corresponding speaker-note-slides.
-- **Slide Screenshot:** Insert a screenshot or image of the original slide into the new slide.
-- **Batch Processing:** Support processing of entire presentations in one operation.
-- **Output Format:** Save the modified presentation as a new file, preserving the original.
- - **Original Slide Page Numbers:** Add a page number to each original slide, ensuring the numbering only counts the original slides and not the inserted speaker notes slides. This prevents confusion in page count and maintains accurate slide references for presenters and printed materials.
+
+| #  | Feature Name                  | Description |
+|----|-------------------------------|-------------|
+| 1  | Slide Duplication             | For each slide in the original presentation, insert a new slide immediately after it. |
+| 2  | Slide Screenshot              | Insert a screenshot or image of the original slide into the new slide. |
+| 3  | Original Slide Page Numbers   | Add a page number to each original slide, ensuring the numbering only counts the original slides and not the inserted speaker notes slides. This prevents confusion in page count and maintains accurate slide references for presenters and printed materials. |
+| 4  | Speaker Notes Extraction      | Copy the speaker notes from the original slide to the new slide. |
+| 5  | External Notes Upload         | Allow users to upload a PDF or Markdown file containing speaker notes for each slide. The app will parse these files and insert the provided notes into the corresponding speaker-note-slides. |
+| 6  | Batch Processing              | Support processing of entire presentations in one operation. |
+| 7  | Output Format                 | Save the modified presentation as a new file, preserving the original. |
 
 ## 4. User Stories
 - As a presenter, I want to print my speaker notes with slide images so I can use them as flip cards.
