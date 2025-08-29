@@ -29,6 +29,95 @@ def add_page_number(slide, page_num):
 import hashlib
 import shutil
 
+def _format_markdown_text(text_frame, markdown_text):
+    """Format markdown-like text in PowerPoint text frame with basic formatting."""
+    import re
+    lines = markdown_text.split('\n')
+    
+    # Clear existing content
+    text_frame.clear()
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        if not line:
+            # Add empty paragraph for spacing
+            if i > 0:
+                text_frame.add_paragraph()
+            continue
+            
+        # Add new paragraph for each line
+        if i == 0:
+            p = text_frame.paragraphs[0]
+        else:
+            p = text_frame.add_paragraph()
+        
+        # Handle different markdown elements
+        if line.startswith('# '):
+            # Header 1
+            p.text = line[2:].strip()
+            p.font.size = Pt(18)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(0, 0, 0)
+        elif line.startswith('## '):
+            # Header 2
+            p.text = line[3:].strip()
+            p.font.size = Pt(16)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(0, 0, 0)
+        elif line.startswith('### '):
+            # Header 3
+            p.text = line[4:].strip()
+            p.font.size = Pt(14)
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(0, 0, 0)
+        elif line.startswith('- ') or line.startswith('* '):
+            # Bullet point
+            _add_formatted_text(p, line[2:].strip(), 12)
+        elif re.match(r'^\d+\. ', line):
+            # Numbered list
+            text = re.sub(r'^\d+\. ', '', line).strip()
+            _add_formatted_text(p, text, 12)
+        else:
+            # Regular text with potential inline formatting
+            _add_formatted_text(p, line, 12)
+
+def _add_formatted_text(paragraph, text, font_size):
+    """Add text with inline bold and italic formatting to a paragraph."""
+    import re
+    
+    # Split text by both **bold** and *italic* markers
+    # Use a more complex regex to handle both bold and italic
+    parts = re.split(r'(\*\*[^*]+\*\*|\*[^*]+\*)', text)
+    
+    # Clear paragraph and start fresh
+    paragraph.clear()
+    
+    for i, part in enumerate(parts):
+        if part.startswith('**') and part.endswith('**') and len(part) > 4:
+            # Bold text
+            run = paragraph.add_run()
+            run.text = part[2:-2]
+            run.font.size = Pt(font_size)
+            run.font.bold = True
+            run.font.italic = False
+            run.font.color.rgb = RGBColor(30, 30, 30)
+        elif part.startswith('*') and part.endswith('*') and len(part) > 2 and not part.startswith('**'):
+            # Italic text (single asterisks, not double)
+            run = paragraph.add_run()
+            run.text = part[1:-1]
+            run.font.size = Pt(font_size)
+            run.font.bold = False
+            run.font.italic = True
+            run.font.color.rgb = RGBColor(30, 30, 30)
+        elif part:
+            # Regular text
+            run = paragraph.add_run()
+            run.text = part
+            run.font.size = Pt(font_size)
+            run.font.bold = False
+            run.font.italic = False
+            run.font.color.rgb = RGBColor(30, 30, 30)
+
 def get_slide_images(input_pptx):
     # Hash the pptx file to create a unique temp folder
     with open(input_pptx, 'rb') as f:
@@ -100,12 +189,20 @@ def export_slide_as_image(prs, slide_idx, tmpdir, input_pptx=None):
     return img_path
 
 # Main processing function
-def process_presentation(input_pptx, output_pptx):
+def process_presentation(input_pptx, output_pptx, notes_path: str | None = None):
     prs = Presentation(input_pptx)
     tmpdir = tempfile.mkdtemp()
     orig_slide_count = len(prs.slides)
     slide_indices = list(range(orig_slide_count))
     page_num = 1
+    # Load notes if provided
+    notes_by_slide = [""] * orig_slide_count
+    if notes_path:
+        try:
+            from utils.notes_parser import parse_notes
+            notes_by_slide = parse_notes(notes_path, orig_slide_count)
+        except Exception as e:
+            print(f"Warning: failed to parse notes file: {e}")
     for offset, slide_idx in enumerate(slide_indices):
         slide = prs.slides[slide_idx + offset]
         add_page_number(slide, page_num)
@@ -136,6 +233,25 @@ def process_presentation(input_pptx, output_pptx):
         left = int(slide_width - target_w - margin)
         top = int(slide_height * 0.05)
         new_slide.shapes.add_picture(img_path, left, top, width=target_w, height=target_h)
+        # Add notes textbox filling the remaining left area if notes exist
+        note_text = notes_by_slide[slide_idx] if slide_idx < len(notes_by_slide) else ""
+        if note_text:
+            gap = int(slide_width * 0.02)
+            notes_left = int(margin)
+            # Make sure notes don't go above the screenshot
+            notes_top = max(int(slide_height * 0.05), top + int(target_h * 0.1))
+            notes_right = left - gap
+            notes_width = max(0, notes_right - notes_left)
+            notes_bottom = int(slide_height - margin)
+            notes_height = max(0, notes_bottom - notes_top)
+            if notes_width > 0 and notes_height > 0:
+                tb = new_slide.shapes.add_textbox(notes_left, notes_top, notes_width, notes_height)
+                tf = tb.text_frame
+                tf.clear()
+                tf.word_wrap = True
+                tf.auto_size = None
+                # Format Markdown-like text in PowerPoint
+                _format_markdown_text(tf, note_text)
         page_num += 1
     prs.save(output_pptx)
     print(f"Saved: {output_pptx}")

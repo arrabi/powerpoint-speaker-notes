@@ -14,10 +14,7 @@ PowerPoint's digital speaker view is useful for presenters, but it cannot be pri
 | 1  | Slide Duplication             | For each slide in the original presentation, insert a new slide immediately after it. |
 | 2  | Slide Screenshot              | Insert a screenshot or image of the original slide into the new slide. |
 | 3  | Original Slide Page Numbers   | Add a page number to each original slide, ensuring the numbering only counts the original slides and not the inserted speaker notes slides. This prevents confusion in page count and maintains accurate slide references for presenters and printed materials. |
-| 4  | Speaker Notes Extraction      | Copy the speaker notes from the original slide to the new slide. |
-| 5  | External Notes Upload         | Allow users to upload a PDF or Markdown file containing speaker notes for each slide. The app will parse these files and insert the provided notes into the corresponding speaker-note-slides. |
-| 6  | Batch Processing              | Support processing of entire presentations in one operation. |
-| 7  | Output Format                 | Save the modified presentation as a new file, preserving the original. |
+| 4  | External Notes Upload         | Allow users to upload a Markdown file containing speaker notes for each slide. The app will parse these files and insert the provided notes into the corresponding speaker-note-slides. |
 
 ## 4. User Stories
 - As a presenter, I want to print my speaker notes with slide images so I can use them as flip cards.
@@ -97,6 +94,27 @@ The MVP will:
 - For each slide in the input .pptx, insert a new slide after it
 - Add a screenshot/image of the original slide to the new slide
 - Add a page number to each original slide, counting only original slides
+
+## 12. Milestone 2: External Notes Upload
+
+Milestone 2 will implement the following feature from the Features table:
+
+| #  | Feature Name           |
+|----|------------------------|
+| 4  | External Notes Upload  |
+
+Scope:
+- Accept a Markdown file that contains speaker notes per slide
+- Each slide that has notes will have a 2nd level header with slide number, e.g. ## Slide 3
+- all the contents in that section are the notes for the slide.
+- Insert the parsed notes into the generated speaker-note slides
+- Fail gracefully if the notes file has fewer entries than slides; leave missing ones blank
+- not all slides will have notes.
+- If unexpected sections are found, then print a warning in the log, with the unexpected section name (e.g. "Section ## Notes is found in markdown and ignored")
+
+Out of scope for this milestone:
+- Custom templates or advanced formatting for notes
+- Heuristics for fuzzy slide mapping beyond index order
 
 ---
 _Last updated: August 29, 2025_
