@@ -128,9 +128,10 @@ def get_slide_images(input_pptx):
     img_dir = os.path.join(base_dir, 'slides')
     os.makedirs(img_dir, exist_ok=True)
 
-    # Reuse if already exported
-    first_img = os.path.join(img_dir, 'slide_output-1.png')
-    if os.path.exists(first_img):
+    # Reuse if already exported - check both naming patterns
+    first_img_simple = os.path.join(img_dir, 'slide_output-1.png')
+    first_img_padded = os.path.join(img_dir, 'slide_output-01.png')
+    if os.path.exists(first_img_simple) or os.path.exists(first_img_padded):
         return img_dir
 
     # Locate LibreOffice
@@ -138,22 +139,26 @@ def get_slide_images(input_pptx):
     if soffice_path is None:
         raise RuntimeError("LibreOffice (soffice) is not installed or not in PATH. Cannot export slides.")
 
-    # 1) Convert PPTX to PDF into base_dir
-    try:
-        subprocess.run([
-            soffice_path, "--headless", "--convert-to", "pdf", "--outdir", base_dir, input_pptx
-        ], check=True)
-    except subprocess.CalledProcessError:
-        raise RuntimeError("LibreOffice failed to convert PPTX to PDF.")
-
+    # 1) Convert PPTX to PDF into base_dir (only if PDF doesn't exist)
     pdf_path = os.path.join(base_dir, f"{name}.pdf")
+    
     if not os.path.exists(pdf_path):
-        # Some LO builds may name output differently; attempt to find the first .pdf in base_dir
-        candidates = [f for f in os.listdir(base_dir) if f.lower().endswith('.pdf')]
-        if candidates:
-            pdf_path = os.path.join(base_dir, candidates[0])
-        else:
-            raise RuntimeError("PDF not found after LibreOffice conversion.")
+        try:
+            subprocess.run([
+                soffice_path, "--headless", "--convert-to", "pdf", "--outdir", base_dir, input_pptx
+            ], check=True)
+        except subprocess.CalledProcessError:
+            raise RuntimeError("LibreOffice failed to convert PPTX to PDF.")
+
+        if not os.path.exists(pdf_path):
+            # Some LO builds may name output differently; attempt to find the first .pdf in base_dir
+            candidates = [f for f in os.listdir(base_dir) if f.lower().endswith('.pdf')]
+            if candidates:
+                pdf_path = os.path.join(base_dir, candidates[0])
+            else:
+                raise RuntimeError("PDF not found after LibreOffice conversion.")
+    else:
+        print(f"Using existing PDF: {pdf_path}")
 
     # 2) Convert PDF to PNG images using pdftoppm
     pdftoppm = shutil.which("pdftoppm")
@@ -171,22 +176,31 @@ def get_slide_images(input_pptx):
 def export_slide_as_image(prs, slide_idx, tmpdir, input_pptx=None):
     # Use real slide image if available
     if input_pptx:
-        img_dir = get_slide_images(input_pptx)
-        img_path = os.path.join(img_dir, f'slide_output-{slide_idx+1}.png')
-        if os.path.exists(img_path):
-            return img_path
-    # fallback: placeholder
-    img_path = os.path.join(tmpdir, f"slide_{slide_idx+1}.png")
-    img = Image.new('RGB', (1280, 720), color=(240, 240, 240))
-    from PIL import ImageDraw, ImageFont
-    draw = ImageDraw.Draw(img)
-    try:
-        font = ImageFont.truetype("arial.ttf", 80)
-    except:
-        font = ImageFont.load_default()
-    draw.text((img.width//2-100, img.height//2-40), f"Slide {slide_idx+1}", fill=(100,100,100), font=font)
-    img.save(img_path)
-    return img_path
+        try:
+            img_dir = get_slide_images(input_pptx)
+            # Try both naming patterns: slide_output-1.png and slide_output-01.png
+            img_path_simple = os.path.join(img_dir, f'slide_output-{slide_idx+1}.png')
+            img_path_padded = os.path.join(img_dir, f'slide_output-{slide_idx+1:02d}.png')
+            
+            if os.path.exists(img_path_simple):
+                print(f"Using real slide image: {img_path_simple}")
+                return img_path_simple
+            elif os.path.exists(img_path_padded):
+                print(f"Using real slide image: {img_path_padded}")
+                return img_path_padded
+            else:
+                print(f"Real slide image not found. Tried: {img_path_simple} and {img_path_padded}")
+                # Check what files actually exist in the directory
+                if os.path.exists(img_dir):
+                    files = os.listdir(img_dir)
+                    print(f"Files in {img_dir}: {files}")
+                else:
+                    print(f"Image directory does not exist: {img_dir}")
+        except Exception as e:
+            print(f"Failed to get real slide images: {e}")
+
+    # fallback: in this case, issue an error, and print the error, and stop
+    raise RuntimeError(f"Slide image not found for slide {slide_idx+1}")
 
 # Main processing function
 def process_presentation(input_pptx, output_pptx, notes_path: str | None = None):
