@@ -83,5 +83,20 @@ This structure keeps the project modular, easy to test, and simple to extend.
 - The tool can process a presentation and generate a new .pptx with speaker-note-slides for every original slide.
 - The output is printable and usable as flip cards.
 
+## 11. Milestone 1: MVP Implementation
+
+Milestone 1 will implement the following features:
+
+| #  | Feature Name                |
+|----|-----------------------------|
+| 1  | Slide Duplication           |
+| 2  | Slide Screenshot            |
+| 3  | Original Slide Page Numbers |
+
+The MVP will:
+- For each slide in the input .pptx, insert a new slide after it
+- Add a screenshot/image of the original slide to the new slide
+- Add a page number to each original slide, counting only original slides
+
 ---
 _Last updated: August 29, 2025_
