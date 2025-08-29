@@ -30,15 +30,53 @@ PowerPoint's digital speaker view is useful for presenters, but it cannot be pri
   - Image processing library (e.g., Pillow)
   - (Optional) Library for rendering slides to images (e.g., `unoconv`, `libreoffice`, or a cloud API)
 
-## 6. Non-Goals
+## 6. Recommended Technology Stack
+
+- **Language:** Python 3.x
+- **PowerPoint Manipulation:** python-pptx
+- **Image Processing:** Pillow (PIL)
+- **Slide Screenshot Generation:** LibreOffice (command line/unoconv), or pptx2pdf + pdf2image, or manual screenshots
+- **PDF Parsing:** PyPDF2 or pdfplumber
+- **Markdown Parsing:** markdown or mistune
+
+This stack is chosen for rapid prototyping, scriptability, and strong library support for the required features.
+
+## 7. Project Organization
+
+Suggested folder structure for maintainability and clarity:
+
+```
+powerpoint-speaker-notes/
+├── main.py                  # Main script to run the utility
+├── requirements.txt         # Python dependencies
+├── README.md
+├── PSN_spec.md
+├── .github/
+│   └── copilot-instructions.md
+├── utils/
+│   ├── __init__.py
+│   ├── pptx_tools.py        # pptx manipulation helpers
+│   ├── image_tools.py       # slide image generation helpers
+│   ├── notes_parser.py      # PDF/Markdown notes parsing helpers
+├── samples/
+│   ├── example.pptx         # Sample input files
+│   ├── notes.md
+│   └── notes.pdf
+└── output/
+  └── (generated files go here)
+```
+
+This structure keeps the project modular, easy to test, and simple to extend.
+
+## 8. Non-Goals
 - Editing or formatting speaker notes content
 - Supporting non-PowerPoint formats (e.g., Google Slides, PDF)
 
-## 7. Open Questions
+## 9. Open Questions
 - What is the best method to generate high-quality slide screenshots?
 - Should the tool support custom slide templates for the speaker-note-slides?
 
-## 8. Success Metrics
+## 10. Success Metrics
 - The tool can process a presentation and generate a new .pptx with speaker-note-slides for every original slide.
 - The output is printable and usable as flip cards.
 
