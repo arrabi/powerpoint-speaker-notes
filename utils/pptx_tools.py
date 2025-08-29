@@ -16,12 +16,14 @@ def add_page_number(slide, page_num):
     height = Inches(0.4)
     txBox = slide.shapes.add_textbox(left, top, width, height)
     tf = txBox.text_frame
-    p = tf.add_paragraph()
-    p.text = f"Page {page_num}"
+    # Ensure only one paragraph and set just the numeric slide number
+    tf.clear()
+    p = tf.paragraphs[0]
+    p.text = f"{page_num}"
     p.font.size = Pt(14)
     p.font.bold = True
     p.font.color.rgb = RGBColor(80, 80, 80)
-    tf.paragraphs[0].alignment = PP_ALIGN.RIGHT
+    p.alignment = PP_ALIGN.RIGHT
 
 # Helper: export slide as image (requires PowerPoint or LibreOffice for best results)
 import hashlib
@@ -108,25 +110,32 @@ def process_presentation(input_pptx, output_pptx):
         slide = prs.slides[slide_idx + offset]
         add_page_number(slide, page_num)
         # Export slide as image (real image if possible)
-        img_path = export_slide_as_image(prs, slide_idx + offset, tmpdir, input_pptx=input_pptx)
+        img_path = export_slide_as_image(prs, slide_idx, tmpdir, input_pptx=input_pptx)
         # Duplicate slide after current
         blank_slide_layout = prs.slide_layouts[6]  # blank
         new_slide = prs.slides.add_slide(blank_slide_layout)
         # Move new slide to correct position
         prs.slides._sldIdLst.insert(slide_idx + offset + 1, prs.slides._sldIdLst[-1])
-        # Add image to new slide (upper right, 0.2x slide size)
+        # Add image to new slide (upper-right, preserve aspect ratio at ~30% slide width)
         slide_width = prs.slide_width
         slide_height = prs.slide_height
-        img_side = int(min(slide_width, slide_height) * 0.2)
-        left = slide_width - img_side - int(slide_width * 0.05)
+        margin = int(slide_width * 0.05)
+        try:
+            with Image.open(img_path) as im:
+                img_w, img_h = im.size
+        except Exception:
+            img_w, img_h = (1280, 720)
+        # target width is 30% of slide width (50% bigger than previous 20%)
+        target_w = int(slide_width * 0.30)
+        target_h = int(target_w * img_h / img_w)
+        # ensure height fits within slide minus margins
+        max_h = int(slide_height - 2 * margin)
+        if target_h > max_h and max_h > 0:
+            target_h = max_h
+            target_w = int(target_h * img_w / img_h)
+        left = int(slide_width - target_w - margin)
         top = int(slide_height * 0.05)
-        new_slide.shapes.add_picture(
-            img_path,
-            left,
-            top,
-            width=img_side,
-            height=img_side
-        )
+        new_slide.shapes.add_picture(img_path, left, top, width=target_w, height=target_h)
         page_num += 1
     prs.save(output_pptx)
     print(f"Saved: {output_pptx}")
