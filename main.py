@@ -35,7 +35,8 @@ if __name__ == "__main__":
         #remember to remove the folder name from input_pptx name
         #input_pptx will have a value with a folder e.g. data/test_input.pptx
         input_filename = os.path.basename(input_pptx)
-        output_pptx = f"data_out/{input_filename.rsplit('.', 1)[0]}_output_{int(time.time())}.pptx"
+        #the datetime stamp should be text readable
+        output_pptx = f"data_out/{input_filename.rsplit('.', 1)[0]}_output_{time.strftime('%Y%m%d_%H%M%S')}.pptx"
     else:
         output_pptx = sys.argv[2]
     process_presentation(input_pptx, output_pptx)
